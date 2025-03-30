@@ -414,4 +414,3 @@ def get_director_film_relations():
         print("Exemple de relation réalisateur-film :", results[0])
 
     return results
-
