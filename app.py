@@ -75,9 +75,11 @@ if st.button("3 - Afficher la moyenne des votes (2007)"):
 
 st.header("MongoDB - Statistiques avancées")
 if st.button("4 - Nombre de films par année"):
-    data = count_films_by_year()
+    df_films, fig = count_films_by_year()
     st.write("Nombre de films par année :")
-    st.dataframe(data)
+    st.dataframe(df_films)
+    st.pyplot(fig)
+
 
 # Genres distincts
 st.header("MongoDB - Genres de films disponibles dans la BDD.")

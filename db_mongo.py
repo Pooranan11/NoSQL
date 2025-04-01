@@ -1,6 +1,9 @@
 from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -68,15 +71,32 @@ def get_avg_votes_for_2007():
 
 def count_films_by_year():
     """
-    Retourne le nombre de films produits par année, triés par année croissante.
+    Retourne un DataFrame du nombre de films par année
+    ET un histogramme à partir du pipeline MongoDB.
     """
     collection = get_films_collection()
+    
+    # Pipeline MongoDB
     pipeline = [
         {"$group": {"_id": "$year", "count": {"$sum": 1}}},
         {"$sort": {"_id": 1}}
     ]
-    return list(collection.aggregate(pipeline))
-
+    results = list(collection.aggregate(pipeline))
+    
+    # Conversion en DataFrame
+    df = pd.DataFrame(results)
+    df = df.rename(columns={"_id": "Year", "count": "Count"})
+    
+    # Création du graphique
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(x="Year", y="Count", data=df, color="skyblue", ax=ax)
+    ax.set_xlabel("Année")
+    ax.set_ylabel("Nombre de films")
+    ax.set_title("Nombre de films par année")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    
+    return df, fig
 
 def get_distinct_genres():
     """
