@@ -227,7 +227,7 @@ if __name__ == "__main__":
     best_year = get_year_with_most_films()
     print("Année avec le plus de films :", best_year)
     total = count_films_after_1999()
-    print("🎬 Nombre de films après 1999 :", total)
+    print("Nombre de films après 1999 :", total)
 
 def get_longest_film_by_genre():
     """
