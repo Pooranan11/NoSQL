@@ -198,23 +198,21 @@ if st.button("Créer un noeud film d'exemple dans Neo4j"):
 
 ##########################################
 
-st.header("Neo4j - Visualisation et requêtes sur les graphes")
+st.header("Neo4j - Visualisation et requêtes sur les graphes") # Test des graphes
 if st.button("Visualiser graphe acteurs-films"):
     afficher_graphe_acteurs_films()
 
-if st.button("Top 1 Acteur (requête alternative)", key="top_actor_alt"):
+if st.button("14 - Top 1 Acteur", key="top_actor_alt"):
     connector = Neo4jConnector()
     result = connector.get_top_actor_alt()
     if result:
         st.success(f"**{result['acteur']}** a joué dans **{result['nb_films']}** films.")
+        draw_top_actor_graph()
     else:
         st.warning("Aucun acteur trouvé.")
     connector.close()
-
-if st.button("Visualiser le graphe de l'acteur le plus prolifique", key="graph_top_actor"):
-    draw_top_actor_graph()
-
-if st.button("Voir les co-acteurs d'Anne Hathaway (texte + graphe)", key="combo_coactors"):
+    
+if st.button("15 - Voir les co-acteurs d'Anne Hathaway", key="combo_coactors"):
     connector = Neo4jConnector()
     coactors = connector.get_coactors_of("Anne Hathaway")
     connector.close()
@@ -226,7 +224,7 @@ if st.button("Voir les co-acteurs d'Anne Hathaway (texte + graphe)", key="combo_
         st.warning("Aucun co-acteur trouvé.")
     draw_coactors_graph("Anne Hathaway")
 
-if st.button("Revenu cumulé + Graphe"):
+if st.button("16 - L’acteur ayant joué dans des films totalisant le plus de revenus"):
     connector = Neo4jConnector()
     top = connector.get_actor_highest_total_revenue()
     if top:
@@ -237,7 +235,7 @@ if st.button("Revenu cumulé + Graphe"):
     else:
         st.warning("Aucun acteur trouvé.")
 
-if st.button("Moyenne des votes + Graphe"):
+if st.button("17 - Moyenne des votes + Graphe"):
     connector = Neo4jConnector()
     results = connector.get_votes_per_film(limit=10)
     votes = [r["votes"] for r in results if r["votes"] is not None]
@@ -250,7 +248,7 @@ if st.button("Moyenne des votes + Graphe"):
         st.warning("Aucune donnée trouvée.")
     connector.close()
 
-if st.button("Genre le plus fréquent + Graphe"):
+if st.button("18 - Genre le plus fréquent + Graphe"):
     connector = Neo4jConnector()
     genre_info = connector.get_most_common_genre()
     connector.close()
@@ -265,7 +263,7 @@ if st.button("Genre le plus fréquent + Graphe"):
 
 st.header("Films des co-acteurs d'un membre du projet")
 selected_member = st.selectbox("Choisissez un membre", ["Matias", "Pooranan"])
-if st.button("Co-acteurs + leurs films (texte + graphe)"):
+if st.button("19 - Co-acteurs + leurs films (texte + graphe)"):
     connector = Neo4jConnector()
     films = connector.get_films_of_my_coactors(selected_member)
     connector.close()
@@ -277,7 +275,7 @@ if st.button("Co-acteurs + leurs films (texte + graphe)"):
         st.warning("Aucun film trouvé pour les co-acteurs.")
     draw_coactors_films_graph(selected_member)
 
-if st.button("Voir le réalisateur le plus connecté aux acteurs"):
+if st.button("20 - Voir le réalisateur le plus connecté aux acteurs"):
     connector = Neo4jConnector()
     result = connector.get_director_with_most_actors()
     if result:
@@ -289,8 +287,7 @@ if st.button("Voir le réalisateur le plus connecté aux acteurs"):
         st.warning("Aucun réalisateur trouvé.")
     connector.close()
 
-st.header("Top 5 des films partageant le plus d’acteurs avec d'autres")
-if st.button("Films les plus connectés (graphe global)"):
+if st.button("21 - Films les plus connectés (graphe global)"):
     connector = Neo4jConnector()
     films = connector.get_most_connected_films(limit=10)
     connector.close()
@@ -300,7 +297,7 @@ if st.button("Films les plus connectés (graphe global)"):
     else:
         st.warning("Aucun film connecté trouvé.")
 
-if st.button("Acteurs avec le plus de réalisateurs différents"):
+if st.button("22 - Acteurs avec le plus de réalisateurs différents"):
     connector = Neo4jConnector()
     acteurs = connector.get_actors_with_most_directors()
     connector.close()
@@ -311,7 +308,7 @@ if st.button("Acteurs avec le plus de réalisateurs différents"):
     else:
         st.warning("Aucun acteur trouvé.")
 
-if st.button("Recommander un film + afficher le graphe"):
+if st.button("23 - Recommander un film + afficher le graphe"):
     acteur = "Scarlett Johansson"  # Vous pouvez remplacer par un st.selectbox()
     connector = Neo4jConnector()
     reco = connector.recommend_film_to_actor(acteur)
@@ -327,25 +324,29 @@ if st.button("Recommander un film + afficher le graphe"):
     else:
         st.warning("Aucune recommandation trouvée.")
 
-if st.button("Créer les relations d'influence entre réalisateurs"):
+if st.button("24 - Créer les relations d'influence entre réalisateurs"):
     connector = Neo4jConnector()
     connector.create_directors_influence_relations()
     connector.close()
     st.success("Relations INFLUENCE_PAR créées entre les réalisateurs.")
 
-if st.button("Voir le chemin le plus court entre Tom Hanks et Scarlett Johansson"):
+if st.button("25 - Voir le chemin le plus court entre Tom Hanks et Scarlett Johansson"):
     draw_shortest_path_between_actors("Tom Hanks", "Scarlett Johansson")
     draw_shortest_path_between_actors("Scarlett Johansson", "Chris Evans")
     draw_shortest_path_between_actors("Leonardo DiCaprio", "Tom Hardy")
 
-if st.button("Visualiser les communautés d'acteurs (Louvain)"):
+if st.button("26 - Visualiser les communautés d'acteurs (Louvain)"):
     draw_actor_communities_graph()
 
 if st.button("Voir les paires d’acteurs avec plusieurs films en commun"):
     draw_actors_with_common_movies(min_common=2)
 
+##########################################
+# Section Transversales
+##########################################
+
 st.header("Requêtes transversales")
-if st.button("Films avec genres communs mais réalisateurs différents"):
+if st.button("27 - Films avec genres communs mais réalisateurs différents"):
     connector = Neo4jConnector()
     films = connector.get_films_with_common_genres_and_different_directors()
     connector.close()
@@ -355,7 +356,7 @@ if st.button("Films avec genres communs mais réalisateurs différents"):
         st.warning("Aucun résultat trouvé.")
 
 actor_input = st.text_input("Entrez le nom de l'acteur pour la recommandation :", "Anne Hathaway")
-if st.button("Recommander des films à l'acteur"):
+if st.button("28 - Recommander des films à l'acteur"):
     connector = Neo4jConnector()
     reco = connector.recommend_films_based_on_actor_preferences(actor_input)
     connector.close()
@@ -364,13 +365,13 @@ if st.button("Recommander des films à l'acteur"):
     else:
         st.warning("Aucune recommandation trouvée pour cet acteur.")
 
-if st.button("Créer la relation de concurrence entre réalisateurs"):
+if st.button("29 - Créer la relation de concurrence entre réalisateurs"):
     connector = Neo4jConnector()
     connector.create_director_competition_relations()
     connector.close()
     st.success("La relation CONCURRENCE a été créée entre réalisateurs.")
 
-if st.button("Collaborations fréquentes réalisateur-acteur"):
+if st.button("30 - Collaborations fréquentes réalisateur-acteur"):
     connector = Neo4jConnector()
     collaborations = connector.get_director_actor_collaborations()
     connector.close()
