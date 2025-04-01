@@ -127,11 +127,11 @@ if st.button("9ter - Top 3 par décennie (Rating)"):
             st.markdown(f"- **{movie.get('title', 'Inconnu')}** — {movie.get('rating', 'N/A')}")
 
 if st.button("9bis - Top 3 par décennie (Metascore)"):
-    results = get_top_3_by_decade_metascore() #à modif
+    results = get_top_3_by_decade_metascore()
     for entry in results:
         st.subheader(f"Décennie {entry['_id']}s (Metascore)")
         for movie in entry["top_movies"]:
-            st.markdown(f"- **{movie.get('title', 'Inconnu')}** — {movie.get('Metascore', 'N/A')}")
+            st.markdown(f"- **{movie.get('title', 'Inconnu')}** — Metascore : {movie.get('Metascore', 'N/A')}")
 
 st.header("MongoDB - Film le plus long par genre")
 if st.button("10 - Afficher le film le plus long pour chaque genre"):
@@ -198,7 +198,7 @@ if st.button("Créer un noeud film d'exemple dans Neo4j"):
 
 ##########################################
 
-st.header("Neo4j - Visualisation et requêtes sur les graphes") # Test des graphes
+st.header("Neo4j - Visualisation et requêtes sur les graphes (TEST Neo4j)") # Test des graphes
 if st.button("Visualiser graphe acteurs-films"):
     afficher_graphe_acteurs_films()
 

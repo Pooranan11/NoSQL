@@ -196,7 +196,11 @@ def get_top_3_by_decade_metascore():
     """
     collection = get_films_collection()
     pipeline = [
-        {"$match": {"Metascore": {"$ne": ""}}},
+        {
+            "$match": {
+                "Metascore": {"$ne": ""}
+            }
+        },
         {
             "$addFields": {
                 "decade": {
@@ -208,7 +212,12 @@ def get_top_3_by_decade_metascore():
                 "MetascoreInt": {"$toInt": "$Metascore"}
             }
         },
-        {"$sort": {"decade": 1, "MetascoreInt": -1}},
+        {
+            "$sort": {
+                "decade": 1,
+                "MetascoreInt": -1
+            }
+        },
         {
             "$group": {
                 "_id": "$decade",
@@ -226,9 +235,14 @@ def get_top_3_by_decade_metascore():
                 "top_movies": {"$slice": ["$top_movies", 3]}
             }
         },
-        {"$sort": {"_id": 1}}
+        {
+            "$sort": {
+                "_id": 1
+            }
+        }
     ]
     return list(collection.aggregate(pipeline))
+
 
 def get_top_3_full_films_by_decade():
     """
