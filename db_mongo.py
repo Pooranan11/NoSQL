@@ -151,6 +151,45 @@ def get_genre_with_highest_avg_revenue():
     result = list(collection.aggregate(pipeline))
     return result[0] if result else None
 
+def get_top_3_by_decade_rating():
+    """
+    Top 3 films par décennie selon le rating (note IMDb).
+    """
+    collection = get_films_collection()
+    pipeline = [
+        {"$match": {"rating": {"$ne": "unrated"}}},
+        {
+            "$addFields": {
+                "decade": {
+                    "$subtract": [
+                        {"$toInt": "$year"},
+                        {"$mod": [{"$toInt": "$year"}, 10]}
+                    ]
+                }
+            }
+        },
+        {"$sort": {"decade": 1, "rating": -1}},
+        {
+            "$group": {
+                "_id": "$decade",
+                "top_movies": {
+                    "$push": {
+                        "title": "$title",
+                        "rating": "$rating"
+                    }
+                }
+            }
+        },
+        {
+            "$project": {
+                "_id": 1,
+                "top_movies": {"$slice": ["$top_movies", 3]}
+            }
+        },
+        {"$sort": {"_id": 1}}
+    ]
+    return list(collection.aggregate(pipeline))
+
 def get_top_3_by_decade_metascore():
     """
     Top 3 films par décennie selon le Metascore.
