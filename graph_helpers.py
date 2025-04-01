@@ -228,7 +228,7 @@ def draw_shared_films_graph_only(film_titles):
     net = Network(height="650px", width="100%", bgcolor="#111", font_color="white")
     net.from_nx(G)
 
-    # ✅ JSON CORRECT (pas de "var", tout en double quotes)
+    # JSON CORRECT (pas de "var", tout en double quotes)
     net.set_options("""
     {
       "edges": {

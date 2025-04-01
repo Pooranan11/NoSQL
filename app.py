@@ -167,9 +167,6 @@ if st.button("Afficher le film le plus long pour chaque genre"):
         film = entry["longest_film"]
         st.markdown(f"- **{genre}** → **{film['title']}** — {film['Runtime']} min")
 
-if st.button("Créer la vue 'vue_films_80_50'"):
-    create_high_score_high_revenue_view()
-
 st.header("MongoDB - Vue films Metascore > 80 & Revenue > 50M")
 if st.button("Créer la vue 'vue_films_80_50'", key="create_view_button"):
     create_high_score_high_revenue_view()
@@ -226,6 +223,8 @@ if st.button("Créer un noeud film d'exemple dans Neo4j"):
     connector.create_film_node(sample_film)
     st.write("Noeud film créé avec succès dans Neo4j.")
     connector.close()
+
+##########################################
 
 st.header("Neo4j - Visualisation et requêtes sur les graphes")
 if st.button("Visualiser graphe acteurs-films"):
