@@ -7,5 +7,5 @@ neo4j = Neo4jConnector()
 for actor in actors:
     neo4j.create_actor_node(actor)
 
-print(f"✅ {len(actors)} acteurs exportés vers Neo4j.")
+print(f"{len(actors)} acteurs exportés vers Neo4j.")
 neo4j.close()

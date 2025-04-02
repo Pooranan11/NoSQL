@@ -8,7 +8,7 @@ from db_mongo import (
     count_films_by_year,
     get_distinct_genres,
     get_film_with_highest_revenue,
-    get_directors_with_more_than_3_films,
+    get_directors_with_more_than_5_films,
     get_directors_with_more_than_2_films_split,
     get_genre_with_highest_avg_revenue,
     get_top_3_by_decade_metascore,
@@ -89,7 +89,7 @@ if st.button("5 - Genres distincts disponibles"):
     st.write(", ".join(genres))
 
 # Film avec le plus gros revenu
-st.header("MongoDB - Le film qui a g´en´er´e le plus de revenu")
+st.header("MongoDB - Le film qui a généré le plus de revenu")
 if st.button("6 - Afficher le film au plus haut revenu"):
     film = get_film_with_highest_revenue()
     if film:
@@ -98,8 +98,8 @@ if st.button("6 - Afficher le film au plus haut revenu"):
         st.warning("Aucun film trouvé avec un revenu valide.")
 
 st.header("MongoDB - Réalisateurs prolifiques")
-if st.button("7 - Afficher les réalisateurs avec plus de 3 films"):
-    directors = get_directors_with_more_than_3_films()
+if st.button("7 - Afficher les réalisateurs avec plus de 5 films"):
+    directors = get_directors_with_more_than_5_films()
     if directors:
         st.write("Réalisateurs ayant dirigé plus de 3 films :")
         st.dataframe(directors)
@@ -180,24 +180,6 @@ if st.button("13 - Durée moyenne des films par décennie"):
 
 ##########################################
 # Section Neo4j - Requêtes Cypher
-##########################################
-
-st.header("Neo4j - Gestion des Films et Acteurs")
-if st.button("Créer un noeud film d'exemple dans Neo4j"):
-    connector = Neo4jConnector()
-    sample_film = {
-        "id": "film_example",
-        "title": "Film Exemple",
-        "year": 2022,
-        "votes": 1500,
-        "revenue": 75000000,
-        "rating": 8.2,
-        "director": "Directeur Exemple"
-    }
-    connector.create_film_node(sample_film)
-    st.write("Noeud film créé avec succès dans Neo4j.")
-    connector.close()
-
 ##########################################
 
 st.header("Neo4j - Visualisation et requêtes sur les graphes (TEST Neo4j)") # Test des graphes
@@ -332,15 +314,16 @@ if st.button("24 - Créer les relations d'influence entre réalisateurs"):
     connector.close()
     st.success("Relations INFLUENCE_PAR créées entre les réalisateurs.")
 
-if st.button("25 - Voir le chemin le plus court entre Tom Hanks et Scarlett Johansson"):
+
+
+if st.button("25 - Chemin Tom Hanks → Scarlett Johansson"):
     draw_shortest_path_between_actors("Tom Hanks", "Scarlett Johansson")
-    draw_shortest_path_between_actors("Scarlett Johansson", "Chris Evans")
-    draw_shortest_path_between_actors("Leonardo DiCaprio", "Tom Hardy")
 
 if st.button("26 - Visualiser les communautés d'acteurs (Louvain)"):
     draw_actor_communities_graph()
 
-if st.button("Voir les paires d’acteurs avec plusieurs films en commun"):
+
+if st.button("Bonus : Voir les paires d’acteurs avec plusieurs films en commun"):
     draw_actors_with_common_movies(min_common=2)
 
 ##########################################
