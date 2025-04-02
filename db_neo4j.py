@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
+from db_mongo import get_films_collection
+
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -73,13 +75,25 @@ class Neo4jConnector:
         """
         Crée une relation (:Actor)-[:A_JOUE_DANS]->(:Film)
         """
+        collection = get_films_collection()
+        films = []
+
+        for film in collection.find():
+            if "actors" in film and film["actors"]:  # S'assure qu'il y a des acteurs
+                films.append({
+                    "id": str(film["id"]),
+                    "actors": film["actors"]
+                })
+
         query = """
-        MATCH (a:Actor {name: $actor_name})
+        UNWIND $actors AS actor_name
+        MATCH (a:Actor {name: actor_name})
         MATCH (f:Film {id: $film_id})
         MERGE (a)-[:A_JOUE_DANS]->(f)
         """
+
         with self.driver.session() as session:
-            session.run(query, actor_name=actor_name, film_id=film_id)
+            session.run(query, actors=[actor_name], film_id=film_id)
     
     def add_project_member_as_actor(self, member_name, film_id):
         """
@@ -168,16 +182,15 @@ class Neo4jConnector:
             result = session.run(query).single()
             return result["MoyenneVotes"] if result else None
 
-    def get_votes_per_film(self, limit=10):
+    def get_votes_per_film(self):
         query = """
         MATCH (f:Film)
         WHERE f.votes IS NOT NULL
         RETURN f.title AS title, f.votes AS votes
         ORDER BY f.votes DESC
-        LIMIT $limit
         """
         with self.driver.session() as session:
-            results = session.run(query, limit=limit)
+            results = session.run(query)
             return [{"title": r["title"], "votes": r["votes"]} for r in results]
 
     def get_most_common_genre(self):
@@ -269,15 +282,19 @@ class Neo4jConnector:
 
     def create_directors_influence_relations(self):
         query = """
-        MATCH (d1:Realisateur)<-[:A_REALISE]-(f1:Film),
-            (d2:Realisateur)<-[:A_REALISE]-(f2:Film)
-        WHERE d1 <> d2
-        AND ANY(genre IN split(f1.genre, ",")
-                WHERE trim(genre) IN split(f2.genre, ","))
+        MATCH (d1:Realisateur)-[:A_REALISE]->(f1:Film)-[:A_POUR_GENRE]->(g1:Genre)
+        WITH d1, COLLECT(DISTINCT g1.name) AS genres_d1
+        MATCH (d2:Realisateur)-[:A_REALISE]->(f2:Film)-[:A_POUR_GENRE]->(g2:Genre)
+        WITH d1, d2, genres_d1, COLLECT(DISTINCT g2.name) AS genres_d2
+        WITH d1, d2, genres_d1, genres_d2
+        WHERE size(apoc.coll.intersection(genres_d1, genres_d2)) > 2  
         MERGE (d1)-[:INFLUENCE_PAR]->(d2)
+        MERGE (d2)-[:INFLUENCE_PAR]->(d1)
         """
         with self.driver.session() as session:
             session.run(query)
+
+
 
     def get_shortest_path_between_actors(self, actor1, actor2):
         query = """
@@ -326,14 +343,17 @@ class Neo4jConnector:
 
     def create_director_competition_relations(self):
         query = """
-        MATCH (d1:Director)<-[:REALISE]-(f1:Film),
-            (d2:Director)<-[:REALISE]-(f2:Film)
-        WHERE d1 <> d2 AND f1.year = f2.year
+        MATCH (d1:Realisateur)-[:A_REALISE]->(f1:Film),
+            (d2:Realisateur)-[:A_REALISE]->(f2:Film)
+        WHERE d1 <> d2
+        AND f1.year = f2.year
+        AND d1.name < d2.name
         AND ANY(genre IN split(f1.genre, ",") WHERE genre IN split(f2.genre, ","))
         MERGE (d1)-[:CONCURRENCE]->(d2)
         """
         with self.driver.session() as session:
             session.run(query)
+
 
 
     def get_director_actor_collaborations(self):
@@ -353,6 +373,18 @@ class Neo4jConnector:
         with self.driver.session() as session:
             results = session.run(query)
             return [record.data() for record in results]
+        
+    def get_actor_edges_for_communities(self):
+        query = """
+        MATCH (a1:Actor)-[:A_JOUE_DANS]->(f:Film)<-[:A_JOUE_DANS]-(a2:Actor)
+        WHERE a1.name < a2.name
+        RETURN DISTINCT a1.name AS actor1, a2.name AS actor2
+        """
+        with self.driver.session() as session:
+            results = session.run(query)
+            edges = [(record["actor1"], record["actor2"]) for record in results]
+            return edges
+
 
 ##################################################
 if __name__ == "__main__":

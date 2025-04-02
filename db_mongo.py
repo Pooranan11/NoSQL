@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import re
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -436,16 +437,23 @@ def get_films_for_neo4j():
 
 def get_distinct_actors():
     """
-    Retourne une liste d'acteurs distincts depuis MongoDB.
+    Retourne une liste d'acteurs distincts depuis MongoDB en normalisant la chaîne pour corriger
+    l'absence d'espace après la virgule.
     """
     collection = get_films_collection()
     pipeline = [
         {"$match": {"Actors": {"$ne": ""}}},
-        {"$project": {"actors": {"$split": ["$Actors", ", "]}}},
-        {"$unwind": "$actors"},
-        {"$group": {"_id": "$actors"}}
+        {"$project": {"Actors": 1}}
     ]
-    return [actor["_id"].strip() for actor in collection.aggregate(pipeline)]
+    actors_set = set()
+    for film in collection.aggregate(pipeline):
+        actors_field = film.get("Actors", "")
+        # Normaliser la chaîne : insérer un espace après chaque virgule si nécessaire
+        corrected = re.sub(r",(\S)", r", \1", actors_field)
+        # Découper la chaîne normalisée en fonction de ", "
+        for actor in corrected.split(", "):
+            actors_set.add(actor.strip())
+    return list(actors_set)
 
 def get_actor_film_relations():
     """
@@ -455,17 +463,20 @@ def get_actor_film_relations():
     collection = get_films_collection()
     pipeline = [
         {"$match": {"Actors": {"$ne": ""}}},
-        {"$project": {
-            "film_id": "$_id",
-            "actors": {"$split": ["$Actors", ", "]}
-        }},
-        {"$unwind": "$actors"},
-        {"$project": {
-            "film_id": 1,
-            "actor": {"$trim": {"input": "$actors"}}
-        }}
+        {"$project": {"film_id": "$_id", "Actors": 1}}
     ]
-    return list(collection.aggregate(pipeline))
+    
+    relations = []
+    for film in collection.aggregate(pipeline):
+        film_id = film.get("film_id")
+        actors_field = film.get("Actors", "")
+        # Normaliser la chaîne : insertion d'un espace après la virgule si nécessaire
+        corrected = re.sub(r",(\S)", r", \1", actors_field)
+        # Découper la chaîne normalisée en fonction de ", " et retirer les espaces superflus
+        for actor in corrected.split(", "):
+            relations.append({"actor": actor.strip(), "film_id": film_id})
+            
+    return relations
 
 def get_director_film_relations():
     """

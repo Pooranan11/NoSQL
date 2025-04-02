@@ -221,7 +221,7 @@ if st.button("16 - L’acteur ayant joué dans des films totalisant le plus de r
 
 if st.button("17 - Moyenne des votes + Graphe"):
     connector = Neo4jConnector()
-    results = connector.get_votes_per_film(limit=10)
+    results = connector.get_votes_per_film()
     votes = [r["votes"] for r in results if r["votes"] is not None]
     moyenne = sum(votes) / len(votes) if votes else 0
     if results:
