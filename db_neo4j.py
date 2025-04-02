@@ -282,12 +282,23 @@ class Neo4jConnector:
     def get_shortest_path_between_actors(self, actor1, actor2):
         query = """
         MATCH (a1:Actor {name: $actor1}), (a2:Actor {name: $actor2})
-        MATCH p = shortestPath((a1)-[:A_JOUE_DANS*]-(a2))
+        MATCH p = shortestPath((a1)-[:A_JOUE_DANS|A_REALISE*]-(a2))
         RETURN p
         """
         with self.driver.session() as session:
             result = session.run(query, actor1=actor1, actor2=actor2).single()
             return result["p"] if result else None
+
+def get_shortest_path_between_actors(self, actor1, actor2):
+    query = """
+    MATCH (a1:Actor {name: $actor1}), (a2:Actor {name: $actor2})
+    MATCH p = allShortestPaths((a1)-[:A_JOUE_DANS|A_REALISE*]-(a2))
+    RETURN p
+    LIMIT 1
+    """
+    with self.driver.session() as session:
+        result = session.run(query, actor1=actor1, actor2=actor2).single()
+        return result["p"] if result else None
 
     def get_films_with_common_genres_and_different_directors(self):
         query = """

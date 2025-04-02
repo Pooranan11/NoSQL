@@ -124,14 +124,14 @@ def get_film_with_highest_revenue():
     result = list(collection.aggregate(pipeline))
     return result[0] if result else None
 
-def get_directors_with_more_than_3_films():
+def get_directors_with_more_than_5_films():
     """
     Retourne la liste des réalisateurs ayant réalisé plus de 5 films.
     """
     collection = get_films_collection()
     pipeline = [
         {"$group": {"_id": "$Director", "number_of_films": {"$sum": 1}}},
-        {"$match": {"number_of_films": {"$gt": 3}}},
+        {"$match": {"number_of_films": {"$gt": 5}}},
         {"$sort": {"number_of_films": -1}}  # Optionnel : tri par nombre décroissant
     ]
     return list(collection.aggregate(pipeline))

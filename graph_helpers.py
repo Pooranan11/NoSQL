@@ -3,7 +3,14 @@ from pyvis.network import Network
 import streamlit.components.v1 as components
 from db_neo4j import Neo4jConnector
 import streamlit as st
-
+import networkx as nx
+from pyvis.network import Network
+import streamlit.components.v1 as components
+import streamlit as st
+import tempfile
+import os
+from db_neo4j import Neo4jConnector
+from networkx.algorithms.community import greedy_modularity_communities
 
 def draw_top_actor_graph():
     connector = Neo4jConnector()
@@ -326,6 +333,7 @@ def draw_shortest_path_between_actors(actor1, actor2):
     from pyvis.network import Network
     import streamlit.components.v1 as components
     import streamlit as st
+    import tempfile
     from db_neo4j import Neo4jConnector
 
     connector = Neo4jConnector()
@@ -337,6 +345,7 @@ def draw_shortest_path_between_actors(actor1, actor2):
         return
 
     G = nx.Graph()
+    nodes_list = []
 
     for node in path.nodes:
         label = node.get("name") or node.get("title")
@@ -346,11 +355,15 @@ def draw_shortest_path_between_actors(actor1, actor2):
             else "orange"
         )
         G.add_node(label, label=label, color=color)
+        nodes_list.append(label)
 
     for rel in path.relationships:
         start = rel.start_node.get("name") or rel.start_node.get("title")
         end = rel.end_node.get("name") or rel.end_node.get("title")
         G.add_edge(start, end)
+
+    st.success("Chemin trouvé !")
+    st.markdown(" → ".join(nodes_list))
 
     net = Network(height="600px", width="100%", bgcolor="#111", font_color="white")
     net.from_nx(G)
@@ -370,70 +383,62 @@ def draw_shortest_path_between_actors(actor1, actor2):
       }
     }
     """)
-    net.save_graph("shortest_path_graph.html")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
+        net.save_graph(tmp_file.name)
+        html_content = open(tmp_file.name, 'r', encoding='utf-8').read()
+        components.html(html_content, height=600)
     connector.close()
 
-    components.html(open("shortest_path_graph.html", "r", encoding="utf-8").read(), height=600)
 
 def draw_actor_communities_graph():
     import networkx as nx
     from pyvis.network import Network
     import streamlit.components.v1 as components
     import streamlit as st
+    import tempfile
+    import os
     from db_neo4j import Neo4jConnector
+    from networkx.algorithms.community import greedy_modularity_communities
 
     connector = Neo4jConnector()
-
-    query = """
-    MATCH (a:Actor)-[:A_JOUE]-(co:Actor)
-    WHERE a.community IS NOT NULL AND co.community IS NOT NULL
-    RETURN a.name AS actor1, co.name AS actor2, a.community AS community
-    LIMIT 500
-    """
-
+    edges = connector.get_actor_edges_for_communities()
 
     G = nx.Graph()
-    color_map = {}
+    G.add_edges_from(edges)
 
-    with connector.driver.session() as session:
-        results = session.run(query)
-        for record in results:
-            a1 = record["actor1"]
-            a2 = record["actor2"]
-            comm = record["community"]
+    # 🔎 Debug rapide
+    st.write(f"Nombre de nœuds : {len(G.nodes())}")
+    st.write(f"Nombre d’arêtes : {len(G.edges())}")
 
-            # Ajout avec couleur différente par communauté
-            if comm not in color_map:
-                color_map[comm] = f"hsl({(comm * 47) % 360}, 100%, 60%)"
+    # Cas vide : on affiche un message
+    if len(G.nodes()) == 0:
+        st.warning("Aucun nœud trouvé. Vérifie que ta base Neo4j contient bien des relations entre acteurs.")
+        return
 
-            G.add_node(a1, label=a1, color=color_map[comm])
-            G.add_node(a2, label=a2, color=color_map[comm])
-            G.add_edge(a1, a2)
+    # Détection des communautés (greedy)
+    communities = list(greedy_modularity_communities(G))
+    node_community = {}
+    for i, community in enumerate(communities):
+        for actor in community:
+            node_community[actor] = i
 
-    net = Network(height="700px", width="100%", bgcolor="#111", font_color="white")
-    net.from_nx(G)
-    net.set_options("""
-    {
-      "nodes": {
-        "shape": "dot",
-        "font": { "size": 14, "color": "white" },
-        "scaling": { "min": 10, "max": 20 }
-      },
-      "edges": {
-        "color": "gray"
-      },
-      "physics": {
-        "barnesHut": {
-          "gravitationalConstant": -30000,
-          "springLength": 150
-        }
-      }
-    }
-    """)
-    net.save_graph("actor_communities.html")
-    connector.close()
+    # Création du graphe interactif PyVis
+    net = Network(height="750px", width="100%", bgcolor="#ffffff", font_color="black")  # 👈 fond blanc forcé
+    for node in G.nodes():
+        net.add_node(node, label=node, group=node_community.get(node, 0))
+    for edge in G.edges():
+        net.add_edge(edge[0], edge[1])
 
-    components.html(open("actor_communities.html", "r", encoding="utf-8").read(), height=700)
+    net.repulsion()
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
+        path = tmp_file.name
+        net.save_graph(path)
+        with open(path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        components.html(html_content, height=800, scrolling=True)
+        os.unlink(path)
 
 
 def draw_actors_with_common_movies(min_common=2):

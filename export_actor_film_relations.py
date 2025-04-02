@@ -13,4 +13,4 @@ for rel in relations:
         print("⚠️ Erreur relation :", rel, "->", e)
 
 neo4j.close()
-print(f"✅ {nb_rels} relations acteur-film créées dans Neo4j.")
+print(f"{nb_rels} relations acteur-film créées dans Neo4j.")

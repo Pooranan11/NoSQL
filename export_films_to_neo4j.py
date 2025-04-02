@@ -28,7 +28,7 @@ for film in collection.find():
         count += 1
 
     except Exception as e:
-        print(f"❌ Erreur lors du traitement du film {film.get('title')} : {e}")
+        print(f"Erreur lors du traitement du film {film.get('title')} : {e}")
 
-print(f"✅ {count} films exportés vers Neo4j.")
+print(f"{count} films exportés vers Neo4j.")
 connector.close()
