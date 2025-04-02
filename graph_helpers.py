@@ -3,14 +3,10 @@ from pyvis.network import Network
 import streamlit.components.v1 as components
 from db_neo4j import Neo4jConnector
 import streamlit as st
-import networkx as nx
-from pyvis.network import Network
-import streamlit.components.v1 as components
-import streamlit as st
 import tempfile
 import os
-from db_neo4j import Neo4jConnector
 from networkx.algorithms.community import greedy_modularity_communities
+
 
 def draw_top_actor_graph():
     connector = Neo4jConnector()
@@ -392,14 +388,6 @@ def draw_shortest_path_between_actors(actor1, actor2):
 
 
 def draw_actor_communities_graph():
-    import networkx as nx
-    from pyvis.network import Network
-    import streamlit.components.v1 as components
-    import streamlit as st
-    import tempfile
-    import os
-    from db_neo4j import Neo4jConnector
-    from networkx.algorithms.community import greedy_modularity_communities
 
     connector = Neo4jConnector()
     edges = connector.get_actor_edges_for_communities()
