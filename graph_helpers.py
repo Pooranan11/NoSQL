@@ -325,12 +325,7 @@ def draw_film_recommendation_graph(actor_name):
     components.html(open("film_reco_graph.html", "r", encoding="utf-8").read(), height=650)
 
 def draw_shortest_path_between_actors(actor1, actor2):
-    import networkx as nx
-    from pyvis.network import Network
-    import streamlit.components.v1 as components
-    import streamlit as st
-    import tempfile
-    from db_neo4j import Neo4jConnector
+
 
     connector = Neo4jConnector()
     path = connector.get_shortest_path_between_actors(actor1, actor2)
