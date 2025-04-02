@@ -1,4 +1,5 @@
 import os
+from db_mongo import get_films_collection
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
@@ -73,13 +74,26 @@ class Neo4jConnector:
         """
         Crée une relation (:Actor)-[:A_JOUE_DANS]->(:Film)
         """
+        collection = get_films_collection()
+        films = []
+
+        for film in collection.find():
+            if "actors" in film and film["actors"]:  # S'assure qu'il y a des acteurs
+                films.append({
+                    "id": str(film["id"]),
+                    "actors": film["actors"]
+                })
+
         query = """
-        MATCH (a:Actor {name: $actor_name})
+        UNWIND $actors AS actor_name
+        MATCH (a:Actor {name: actor_name})
         MATCH (f:Film {id: $film_id})
         MERGE (a)-[:A_JOUE_DANS]->(f)
         """
+
         with self.driver.session() as session:
-            session.run(query, actor_name=actor_name, film_id=film_id)
+            session.run(query, actors=[actor_name], film_id=film_id)
+
     
     def add_project_member_as_actor(self, member_name, film_id):
         """
@@ -168,16 +182,16 @@ class Neo4jConnector:
             result = session.run(query).single()
             return result["MoyenneVotes"] if result else None
 
-    def get_votes_per_film(self, limit=10):
+    def get_votes_per_film(self):
         query = """
         MATCH (f:Film)
         WHERE f.votes IS NOT NULL
         RETURN f.title AS title, f.votes AS votes
         ORDER BY f.votes DESC
-        LIMIT $limit
+    
         """
         with self.driver.session() as session:
-            results = session.run(query, limit=limit)
+            results = session.run(query)
             return [{"title": r["title"], "votes": r["votes"]} for r in results]
 
     def get_most_common_genre(self):
